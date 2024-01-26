@@ -1,0 +1,38 @@
+version: '3.3'
+
+volumes:
+  s323_db:
+  s325_db:
+
+networks:
+  heron_api:
+    external: true
+
+services:
+  s323_db:
+    hostname: ${DB_HOST}
+    container_name: s323_db
+    image: postgres:15.1-alpine
+    restart: always
+    ports:
+      - 5601:5432
+    volumes:
+      - s323_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+
+  s325_db:
+    hostname: ${DB_HOST}
+    container_name: s325_db
+    image: postgres:15.1-alpine
+    restart: always
+    ports:
+      - 5602:5432
+    volumes:
+      - s325_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}

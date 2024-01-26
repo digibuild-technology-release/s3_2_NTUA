@@ -1,0 +1,89 @@
+version: '3.3'
+
+
+
+volumes:
+  db-data:
+  redis-data:
+
+
+services:
+  s323_rest_api:
+    hostname: s323_rest_api
+    container_name: s323_rest_api
+    restart: always
+    env_file:
+      - .env
+    build:
+      context: "../rest_api"
+      dockerfile: Dockerfile
+    ports:
+      - 1313:80
+    networks:
+      - heron_api
+
+  db:
+    container_name: ${DB_HOST}
+    hostname: ${DB_HOST}
+    image: postgres:15.2-alpine
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data/
+    ports:
+      - ${DB_PORT}:5432
+    networks:
+      - heron_api
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+
+  celery-beat:
+    build:
+      context: "../scheduler"
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: celery -A tasks beat --loglevel=info
+    environment:
+      - .:/app
+    restart: always
+    depends_on:
+      - redis
+    networks:
+      - heron_api
+
+  celery-worker:
+    build:
+      context: "../scheduler"
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: celery -A tasks worker --loglevel=info
+    environment:
+      #- BROKER_URL=redis://redis:6379/0
+        #- PYTHONUNBUFFERED=1
+      - .:/app
+    restart: always
+    depends_on:
+      - redis
+    networks:
+      - heron_api
+
+  redis:
+    image: redis:alpine
+    restart: always
+      #ports:
+      #po- 6379:6379
+    volumes:
+      - redis-data:/data
+    networks:
+      - heron_api
+
+
+networks:
+  heron_api:
+
+
